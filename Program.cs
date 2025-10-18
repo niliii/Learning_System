@@ -19,24 +19,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<IPasswordHasher<LearningHub.Api.Models.User>, PasswordHasher<LearningHub.Api.Models.User>>();
 
-// CORS: اجازه برای Vite dev server (پورت پیش‌فرض 5173)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
-
 // JWT
 var jwt = builder.Configuration.GetSection("JwtSettings");
-var secret = builder.Configuration.GetValue<string>("JwtSettings:Secret")
-             ?? throw new InvalidOperationException("JWT secret is not configured.");
-var key = Encoding.UTF8.GetBytes(secret);
-
+var key = Encoding.UTF8.GetBytes(jwt["Secret"]!);
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -60,6 +45,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
+    // برای تست swager با توکن: تنظیمات خیلی ساده
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme.",
@@ -85,8 +71,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
